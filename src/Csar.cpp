@@ -6,16 +6,9 @@
 #include "Cwar.hpp"
 #include <cstdint>
 #include <fstream>
+#include <map>
 #include <string>
 #include <vector>
-
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif
 
 using namespace std;
 
@@ -37,9 +30,9 @@ Csar::~Csar()
 {
 	for (auto cwar : Cwars)
 	{
-		if (cwar)
+		if (cwar.second)
 		{
-			delete cwar;
+			delete cwar.second;
 		}
 	}
 
@@ -53,13 +46,8 @@ Csar::~Csar()
 
 bool Csar::Extract()
 {
-#ifdef _WIN32
-	_mkdir(FileName.substr(0, FileName.length() - 6).c_str());
-	_chdir(FileName.substr(0, FileName.length() - 6).c_str());
-#else
-	mkdir(FileName.substr(0, FileName.length() - 6).c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-	chdir(FileName.substr(0, FileName.length() - 6).c_str());
-#endif
+	Common::Mkdir(FileName.substr(0, FileName.length() - 6));
+	Common::Chdir(FileName.substr(0, FileName.length() - 6));
 
 	uint8_t* pos = Data;
 
@@ -255,7 +243,7 @@ bool Csar::Extract()
 		
 		uint32_t hasFileName = ReadFixLen(pos, 4);
 
-		string fileName = hasFileName ? strgs[ReadFixLen(pos, 4)].String : "WARC_" + to_string(i);
+		string fileName = hasFileName ? strgs[ReadFixLen(pos, 4)].String : to_string(id);
 
 		if (files[id].Offset != nullptr)
 		{
@@ -265,34 +253,25 @@ bool Csar::Extract()
 
 			pos -= 16;
 
-#ifdef _WIN32
-			_mkdir(fileName.c_str());
-			_chdir(fileName.c_str());
-#else
-			mkdir(fileName.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-			chdir(fileName.c_str());
-#endif
+			Common::Mkdir(fileName);
+			Common::Chdir(fileName);
 
 			ofstream ofs(string(fileName + ".cwar"), ofstream::binary);
 			ofs.write(reinterpret_cast<const char*>(pos), cwarLength);
 			ofs.close();
 
-			Cwars.push_back(new Cwar(string(fileName + ".cwar").c_str()));
+			Cwars[id] = new Cwar(string(fileName + ".cwar").c_str());
 
-			if (!Cwars[i]->Extract())
+			if (!Cwars[id]->Extract())
 			{
 				return false;
 			}
 
-#ifdef _WIN32
-			_chdir("..");
-#else
-			chdir("..");
-#endif
+			Common::Chdir("..");
 		}
 		else
 		{
-			Cwars.push_back(nullptr);
+			Cwars[id] = nullptr;
 		}
 	}
 
@@ -324,13 +303,8 @@ bool Csar::Extract()
 
 		cbnks[i].FileName = strgs[ReadFixLen(pos, 4)].String;
 
-#ifdef _WIN32
-		_mkdir(cbnks[i].FileName.c_str());
-		_chdir(cbnks[i].FileName.c_str());
-#else
-		mkdir(cbnks[i].FileName.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-		chdir(cbnks[i].FileName.c_str());
-#endif
+		Common::Mkdir(cbnks[i].FileName);
+		Common::Chdir(cbnks[i].FileName);
 
 		if (files[cbnks[i].Id].Offset != nullptr)
 		{
@@ -352,11 +326,7 @@ bool Csar::Extract()
 			}
 		}
 
-#ifdef _WIN32
-		_chdir("..");
-#else
-		chdir("..");
-#endif
+		Common::Chdir("..");
 	}
 
 	pos = Data + infoOffset + 8 + infoCseqOffset;
@@ -364,6 +334,7 @@ bool Csar::Extract()
 	uint32_t cseqCount = ReadFixLen(pos, 4);
 
 	vector<CsarCseq> cseqs;
+	map<int, bool> cseqsFromCsar;
 
 	for (uint32_t i = 0; i < cseqCount; ++i)
 	{
@@ -419,11 +390,7 @@ bool Csar::Extract()
 
 				pos -= 16;
 
-#ifdef _WIN32
-				_chdir(cbnks[cbnk].FileName.c_str());
-#else
-				chdir(cbnks[cbnk].FileName.c_str());
-#endif
+				Common::Chdir(cbnks[cbnk].FileName);
 
 				ofstream ofs(string(cseqs[i].FileName + ".cseq"), ofstream::binary);
 				ofs.write(reinterpret_cast<const char*>(pos), cseqLength);
@@ -436,11 +403,9 @@ bool Csar::Extract()
 					return false;
 				}
 
-#ifdef _WIN32
-				_chdir("..");
-#else
-				chdir("..");
-#endif
+				Common::Chdir("..");
+
+				cseqsFromCsar[id] = true;
 
 				break;
 			}
@@ -504,14 +469,6 @@ bool Csar::Extract()
 
 		cgrps[i].FileName = strgs[ReadFixLen(pos, 4)].String;
 
-#ifdef _WIN32
-		_mkdir(cgrps[i].FileName.c_str());
-		_chdir(cgrps[i].FileName.c_str());
-#else
-		mkdir(cgrps[i].FileName.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
-		chdir(cgrps[i].FileName.c_str());
-#endif
-
 		if (files[cgrps[i].Id].Offset != nullptr)
 		{
 			pos = files[cgrps[i].Id].Offset + 12;
@@ -524,19 +481,13 @@ bool Csar::Extract()
 			ofs.write(reinterpret_cast<const char*>(pos), cgrpLength);
 			ofs.close();
 
-			Cgrp cgrp(string(cgrps[i].FileName + ".cgrp").c_str(), P);
+			Cgrp cgrp(string(cgrps[i].FileName + ".cgrp").c_str(), &Cwars, cseqsFromCsar, P);
 
 			if (!cgrp.Extract())
 			{
 				return false;
 			}
 		}
-
-#ifdef _WIN32
-		_chdir("..");
-#else
-		chdir("..");
-#endif
 	}
 
 	Common::Dump(FileName.substr(0, FileName.length() - 5).append("log"));
