@@ -1,6 +1,7 @@
 #include "Cseq.hpp"
 #include "Common.hpp"
 #include "libsmfc/libsmfc.h"
+#include "libsmfcx.c"
 #include "libsmfc/libsmfcx.h"
 #include <cstdint>
 #include <fstream>
