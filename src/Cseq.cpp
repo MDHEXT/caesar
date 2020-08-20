@@ -586,7 +586,7 @@ bool Cseq::Convert()
 			}
 			else if (i->second.Cmd == 0xD4)
 			{
-				smfInsertEvent(smf, absTime, track, track, SMF_EVENT, LoopStart);
+				smfInsertEvent(smf, absTime, track, track, smf_event_new_from_bytes(0x4c, 0x6f, 0x6f, 0x70, 0x53, 0x74, 0x61, 0x72, 0x74, -1);
 			}
 			else if (i->second.Cmd == 0xD5)
 			{
@@ -650,7 +650,7 @@ bool Cseq::Convert()
 			}
 			else if (i->second.Cmd == 0xFC)
 			{
-				smfInsertEvent(smf, absTime, track, track, SMF_EVENT, LoopEnd);
+				smfInsertEvent(smf, absTime, track, track, smf_event_new_from_bytes(0x4c, 0x6f, 0x6f, 0x70, 0x45, 0x6e, 0x64, -1);
 			}
 			else if (i->second.Cmd == 0xFD)
 			{
