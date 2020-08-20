@@ -586,7 +586,7 @@ bool Cseq::Convert()
 			}
 			else if (i->second.Cmd == 0xD4)
 			{
-				smfInsertControl(smf, absTime, track, track, SMF_METAEVENT_MARKER, LoopStart);
+				smfInsertControl(smf, absTime, track, track, SMF_EVENT, LoopStart);
 			}
 			else if (i->second.Cmd == 0xD5)
 			{
@@ -650,7 +650,7 @@ bool Cseq::Convert()
 			}
 			else if (i->second.Cmd == 0xFC)
 			{
-				smfInsertControl(smf, absTime, track, track, SMF_METAEVENT_MARKER, LoopEnd);
+				smfInsertControl(smf, absTime, track, track, SMF_EVENT, LoopEnd);
 			}
 			else if (i->second.Cmd == 0xFD)
 			{
