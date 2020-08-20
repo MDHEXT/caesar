@@ -586,11 +586,11 @@ bool Cseq::Convert()
 			}
 			else if (i->second.Cmd == 0xD4)
 			{
-				smfEventCreate(absTime, track, track, LoopStart, 9);
+				smfInsertControl(smf, absTime, track, track, SMF_EVENT_META, "LoopStart");
 			}
 			else if (i->second.Cmd == 0xD5)
 			{
-				smfInsertControl(absTime, track, track, SMF_CONTROL_EXPRESSION, i->second.Args[0]);
+				smfInsertControl(smf, absTime, track, track, SMF_CONTROL_EXPRESSION, i->second.Args[0]);
 			}
 			else if (i->second.Cmd == 0xD6)
 			{
@@ -650,7 +650,7 @@ bool Cseq::Convert()
 			}
 			else if (i->second.Cmd == 0xFC)
 			{
-				smfEventCreate(absTime, track, track, LoopEnd, 7);
+				smfInsertControl(smf, absTime, track, track, SMF_EVENT_META, "LoopStart");
 			}
 			else if (i->second.Cmd == 0xFD)
 			{
